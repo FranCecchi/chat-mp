@@ -19,6 +19,16 @@ class TelegramBotClient:
         await bot.send_message(chat_id=chat_id, text=text)
         return True
 
+    async def send_typing_action(self, chat_id: int) -> bool:
+        if not self.is_configured:
+            return False
+        try:
+            bot = Bot(token=self.settings.telegram_bot_token)
+            await bot.send_chat_action(chat_id=chat_id, action="escribiendo respuesta")
+            return True
+        except Exception:
+            return False
+
     async def set_webhook(self, public_url: str) -> bool:
         if not self.is_configured:
             return False

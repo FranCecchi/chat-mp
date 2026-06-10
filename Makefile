@@ -1,5 +1,17 @@
-PYTHON := .venv/bin/python
-PIP := .venv/bin/pip
+# 1. Detección del Sistema Operativo
+ifeq ($(OS),Windows_NT)
+    # Configuración para Windows
+    PYTHON_DIR := .venv/Scripts
+    PYTHON := $(PYTHON_DIR)/python.exe
+    PIP := $(PYTHON_DIR)/pip.exe
+    PYTHON_SYSTEM := python
+else
+    # Configuración para Linux / macOS
+    PYTHON_DIR := .venv/bin
+    PYTHON := $(PYTHON_DIR)/python
+    PIP := $(PYTHON_DIR)/pip
+    PYTHON_SYSTEM := python3
+endif
 
 .PHONY: help venv install run test health webhook webhook-info webhook-delete
 
@@ -14,7 +26,7 @@ help:
 	@echo "  make webhook-delete Borrar webhook de Telegram"
 
 venv:
-	python3 -m venv .venv
+	$(PYTHON_SYSTEM) -m venv .venv
 
 install: venv
 	$(PYTHON) -m pip install --upgrade pip
@@ -30,10 +42,12 @@ health:
 	curl http://127.0.0.1:8000/health
 
 webhook:
-	@if [ -z "$(URL)" ]; then \
-		echo "Uso: make webhook URL=https://TU_DOMINIO/telegram/webhook"; \
-		exit 2; \
-	fi
+# En Windows (CMD/PowerShell) el 'if' de Bash falla, usamos una validación nativa de Make
+ifndef URL
+	@echo "Error: Falta la variable URL."
+	@echo "Uso: make webhook URL=https://TU_DOMINIO/telegram/webhook"
+	@exit 2
+endif
 	$(PYTHON) -m app.telegram.manage_webhook set "$(URL)"
 
 webhook-info:

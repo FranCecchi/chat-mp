@@ -11,6 +11,9 @@ from app.telegram.messages import START_REPLY
 
 router = APIRouter(prefix="/telegram", tags=["telegram"])
 
+# Mantener registro de usuarios que tienen un mensaje procesándose
+processing_users: set[str] = set()
+
 
 @router.post("/webhook")
 async def telegram_webhook(
@@ -32,6 +35,18 @@ async def telegram_webhook(
     telegram_user_key = (
         f"{inbound_message.telegram_chat_id}:{inbound_message.telegram_user_id}"
     )
+
+    # Si ya hay un mensaje en curso para este usuario, advertimos e ignoramos el nuevo
+    if telegram_user_key in processing_users:
+        await telegram_bot_client.send_text_message(
+            chat_id=inbound_message.telegram_chat_id,
+            text="Por favor, esperá a que responda tu mensaje anterior. Tu último mensaje no se procesará.",
+        )
+        return {
+            "ok": True,
+            "status": "ignored_concurrent",
+        }
+
     if is_start_command(inbound_message.text):
         conversation_service.reset_user(telegram_user_key, source="telegram")
         sent = await telegram_bot_client.send_text_message(
@@ -44,16 +59,22 @@ async def telegram_webhook(
             "message_sent": sent,
         }
 
-    response = await conversation_service.handle_user_message(
-        user_id=telegram_user_key,
-        message=inbound_message.text,
-        conversation_id=None,
-        source="telegram",
-    )
-    sent = await telegram_bot_client.send_text_message(
-        chat_id=inbound_message.telegram_chat_id,
-        text=response.reply,
-    )
+    # Bloqueamos el usuario, enviamos estado "escribiendo" y procesamos
+    processing_users.add(telegram_user_key)
+    try:
+        await telegram_bot_client.send_typing_action(inbound_message.telegram_chat_id)
+        response = await conversation_service.handle_user_message(
+            user_id=telegram_user_key,
+            message=inbound_message.text,
+            conversation_id=None,
+            source="telegram",
+        )
+        sent = await telegram_bot_client.send_text_message(
+            chat_id=inbound_message.telegram_chat_id,
+            text=response.reply,
+        )
+    finally:
+        processing_users.discard(telegram_user_key)
 
     return {
         "ok": True,

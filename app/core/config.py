@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     deepseek_base_url: str = "https://api.deepseek.com"
     deepseek_model: str = "deepseek-v4-flash"
 
+    llm_api_url: str = "https://lucia-lotumolo--educeva-chatbot-serve-dev.modal.run/v1/chat/completions"
+    llm_model: str = "google/gemma-4-E4B-it"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
