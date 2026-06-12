@@ -81,6 +81,9 @@ Poné tus archivos dentro de la carpeta:
 refs/
 ```
 
+Los contenidos de `refs/` son locales y estan ignorados por git. La carpeta se
+mantiene en el repo con `refs/.gitkeep`, pero tus PDFs/CSVs no se commitean.
+
 Formatos soportados ahora:
 
 - `.pdf`: se extrae texto por pagina y se divide en fragmentos.
