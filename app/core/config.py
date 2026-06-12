@@ -12,10 +12,14 @@ class Settings(BaseSettings):
 
     deepseek_api_key: str = ""
     deepseek_base_url: str = "https://api.deepseek.com"
-    deepseek_model: str = "deepseek-v4-flash"
+    deepseek_model: str = "deepseek-chat"
 
-    llm_api_url: str = "https://lucia-lotumolo--educeva-chatbot-serve-dev.modal.run/v1/chat/completions"
-    llm_model: str = "google/gemma-4-E4B-it"
+    database_url: str = "postgresql://chatmp:chatmp@localhost:5432/chatmp"
+    rag_enabled: bool = True
+    rag_top_k: int = 5
+    rag_fail_open: bool = True
+    embedding_model: str = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+    embedding_dimension: int = 384
 
     model_config = SettingsConfigDict(
         env_file=".env",

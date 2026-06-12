@@ -194,8 +194,15 @@ Responde SIEMPRE con este JSON exacto, sin texto adicional antes ni después:
 def build_llm_messages(
     historial: list[dict[str, str]],
     system_prompt: str,
+    retrieved_context: str = "",
 ) -> list[dict[str, str]]:
     """Construye los mensajes para la API de LLM combinando el system prompt con el historial."""
+    if retrieved_context:
+        system_prompt = (
+            f"{system_prompt}\n\n"
+            "## Contexto RAG\n"
+            f"{retrieved_context}"
+        )
     return [{"role": "system", "content": system_prompt}] + historial
 
 

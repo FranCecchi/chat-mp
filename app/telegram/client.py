@@ -1,4 +1,5 @@
 from telegram import Bot
+from telegram.constants import ChatAction
 
 from app.core.config import get_settings
 
@@ -24,7 +25,7 @@ class TelegramBotClient:
             return False
         try:
             bot = Bot(token=self.settings.telegram_bot_token)
-            await bot.send_chat_action(chat_id=chat_id, action="escribiendo respuesta")
+            await bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
             return True
         except Exception:
             return False

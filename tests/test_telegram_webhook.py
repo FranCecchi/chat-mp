@@ -46,12 +46,37 @@ async def test_telegram_webhook_ignores_unsupported_update() -> None:
 async def test_telegram_webhook_processes_text_without_network(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    replies = iter(
+        [
+            """
+            {
+              "scores": {
+                "Observar con atención y describir": 0.2,
+                "Explicar y dar sentido": 0.7,
+                "Relacionar ideas y conceptos": 0.4
+              },
+              "razonamiento": "La respuesta sugiere explicación y comparación."
+            }
+            """,
+            """
+            {
+              "pregunta": "¿Qué compararon exactamente entre los dos textos?",
+              "razonamiento": "Necesito discriminar explicación de relación de ideas."
+            }
+            """,
+        ]
+    )
+
     async def fake_chat(messages: list[dict[str, str]]) -> str:
-        return "Respuesta desde DeepSeek."
+        return next(replies)
 
     async def fake_send_text_message(chat_id: int, text: str) -> bool:
         assert chat_id == 456
-        assert text == "Respuesta desde DeepSeek."
+        assert text == "¿Qué compararon exactamente entre los dos textos?"
+        return False
+
+    async def fake_send_typing_action(chat_id: int) -> bool:
+        assert chat_id == 456
         return False
 
     monkeypatch.setattr(
@@ -63,6 +88,11 @@ async def test_telegram_webhook_processes_text_without_network(
         telegram_router.telegram_bot_client,
         "send_text_message",
         fake_send_text_message,
+    )
+    monkeypatch.setattr(
+        telegram_router.telegram_bot_client,
+        "send_typing_action",
+        fake_send_typing_action,
     )
 
     settings = get_settings()

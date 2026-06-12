@@ -8,6 +8,10 @@ from app.core.config import get_settings
 
 
 class DeepSeekClient:
+    def chat_completions_url(self) -> str:
+        settings = get_settings()
+        return f"{settings.deepseek_base_url.rstrip('/')}/chat/completions"
+
     async def chat(
         self,
         messages: list[dict[str, str]],
@@ -17,7 +21,7 @@ class DeepSeekClient:
         settings = get_settings()
 
         payload = {
-            "model": settings.llm_model,
+            "model": settings.deepseek_model,
             "messages": messages,
             "temperature": temperature,
             "max_tokens": max_tokens,
@@ -25,12 +29,14 @@ class DeepSeekClient:
         headers = {
             "Content-Type": "application/json",
         }
-        if settings.deepseek_api_key:
-            headers["Authorization"] = f"Bearer {settings.deepseek_api_key}"
+        if not settings.deepseek_api_key:
+            raise ValueError("DEEPSEEK_API_KEY is not configured.")
+
+        headers["Authorization"] = f"Bearer {settings.deepseek_api_key}"
 
         async with httpx.AsyncClient(timeout=180) as client:
             response = await client.post(
-                settings.llm_api_url,
+                self.chat_completions_url(),
                 json=payload,
                 headers=headers,
             )

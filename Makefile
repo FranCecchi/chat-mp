@@ -13,7 +13,7 @@ else
     PYTHON_SYSTEM := python3
 endif
 
-.PHONY: help venv install run test health webhook webhook-info webhook-delete
+.PHONY: help venv install run test health db-up db-down ingest-rag webhook webhook-info webhook-delete
 
 help:
 	@echo "Targets disponibles:"
@@ -21,6 +21,9 @@ help:
 	@echo "  make run            Correr la API en desarrollo"
 	@echo "  make test           Correr tests"
 	@echo "  make health         Probar GET /health"
+	@echo "  make db-up          Levantar Postgres con pgvector"
+	@echo "  make db-down        Apagar Postgres con pgvector"
+	@echo "  make ingest-rag     Ingerir refs/ en pgvector"
 	@echo "  make webhook URL=... Registrar webhook de Telegram"
 	@echo "  make webhook-info   Ver estado del webhook de Telegram"
 	@echo "  make webhook-delete Borrar webhook de Telegram"
@@ -40,6 +43,15 @@ test:
 
 health:
 	curl http://127.0.0.1:8000/health
+
+db-up:
+	docker compose up -d postgres
+
+db-down:
+	docker compose down
+
+ingest-rag:
+	$(PYTHON) -m app.rag.ingest
 
 webhook:
 # En Windows (CMD/PowerShell) el 'if' de Bash falla, usamos una validación nativa de Make

@@ -10,6 +10,7 @@ from app.prompts.conversation import (
     build_llm_messages,
     construir_prompt_questioner,
 )
+from app.rag.service import rag_service
 from app.schemas.chat import ChatMessageResponse
 from app.services.conversation_memory import ConversationMemory
 
@@ -70,10 +71,18 @@ class ConversationService:
 
         # Creamos un historial temporal que incluya el mensaje actual del alumno
         temp_history = history + [{"role": "user", "content": message}]
+        retrieved_context = rag_service.build_context(
+            message=message,
+            history=history,
+        )
 
         try:
             # ── LLAMADA 1: SCORER ──
-            messages_scorer = build_llm_messages(temp_history, PROMPT_SCORER)
+            messages_scorer = build_llm_messages(
+                temp_history,
+                PROMPT_SCORER,
+                retrieved_context,
+            )
             respuesta_scorer = await deepseek_client.chat(messages_scorer)
             datos_scorer = parsear_json(respuesta_scorer)
 
@@ -107,7 +116,11 @@ class ConversationService:
                     movimiento=movimiento,
                     nivel_logro=nivel_logro,
                 )
-                messages_cls = build_llm_messages(temp_history, prompt_cls)
+                messages_cls = build_llm_messages(
+                    temp_history,
+                    prompt_cls,
+                    retrieved_context,
+                )
                 respuesta_cls = await deepseek_client.chat(messages_cls)
                 datos_cls = parsear_json(respuesta_cls)
 
@@ -145,7 +158,11 @@ class ConversationService:
                 prompt_q = construir_prompt_questioner(
                     top_3, max_score, UMBRAL_EXPLORAR
                 )
-                messages_q = build_llm_messages(temp_history, prompt_q)
+                messages_q = build_llm_messages(
+                    temp_history,
+                    prompt_q,
+                    retrieved_context,
+                )
                 respuesta_q = await deepseek_client.chat(messages_q)
                 datos_q = parsear_json(respuesta_q)
 
