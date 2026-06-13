@@ -1,7 +1,7 @@
 PYTHON := .venv/bin/python
 PIP := .venv/bin/pip
 
-.PHONY: help venv install run test health webhook webhook-info webhook-delete
+.PHONY: help venv install run test health models
 
 help:
 	@echo "Targets disponibles:"
@@ -9,9 +9,7 @@ help:
 	@echo "  make run            Correr la API en desarrollo"
 	@echo "  make test           Correr tests"
 	@echo "  make health         Probar GET /health"
-	@echo "  make webhook URL=... Registrar webhook de Telegram"
-	@echo "  make webhook-info   Ver estado del webhook de Telegram"
-	@echo "  make webhook-delete Borrar webhook de Telegram"
+	@echo "  make models         Probar GET /v1/models"
 
 venv:
 	python3 -m venv .venv
@@ -29,15 +27,5 @@ test:
 health:
 	curl http://127.0.0.1:8000/health
 
-webhook:
-	@if [ -z "$(URL)" ]; then \
-		echo "Uso: make webhook URL=https://TU_DOMINIO/telegram/webhook"; \
-		exit 2; \
-	fi
-	$(PYTHON) -m app.telegram.manage_webhook set "$(URL)"
-
-webhook-info:
-	$(PYTHON) -m app.telegram.manage_webhook info
-
-webhook-delete:
-	$(PYTHON) -m app.telegram.manage_webhook delete
+models:
+	curl http://127.0.0.1:8000/v1/models

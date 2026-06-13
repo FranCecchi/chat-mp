@@ -1,28 +1,24 @@
 # Chat MP
 
-Backend minimo para probar un bot de Telegram conectado a una API FastAPI.
+Backend FastAPI para usar Chat MP desde una instancia local de Open WebUI.
 
 Estado actual:
 
 - API FastAPI.
 - Endpoint de salud.
-- Endpoint de chat con respuesta placeholder.
-- Webhook de Telegram usando Bot API.
-- Comando `/start` en Telegram.
-- Memoria local en proceso para mantener contexto corto de conversación.
-- Comandos `make` para correr, testear y registrar webhook.
+- API compatible con OpenAI en `/v1`.
+- Backend de modelo vía Google GenAI.
+- Streaming SSE para `/v1/chat/completions`.
 
-Todavia no incluye:
+No incluye:
 
-- Modelo LLM.
+- Bot o webhook de Telegram.
+- UI propia.
 - RAG.
 - Base de datos.
 - LangGraph.
-- Clasificacion pedagogica real.
 
-La memoria actual es volatil: se pierde si se reinicia el servidor. `/start` reinicia la conversacion del usuario en Telegram.
-
-Esas partes se agregan incrementalmente cuando se implementen.
+Open WebUI mantiene el historial de conversación y lo envía en `messages`. Este backend no guarda memoria por usuario.
 
 ## Instalar y correr
 

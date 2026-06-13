@@ -7,12 +7,10 @@ class Settings(BaseSettings):
     app_name: str = "Chat MP API"
     environment: str = "development"
 
-    telegram_bot_token: str = ""
-    telegram_webhook_secret: str = "dev-secret"
-
-    deepseek_api_key: str = ""
-    deepseek_base_url: str = "https://api.deepseek.com"
-    deepseek_model: str = "deepseek-v4-flash"
+    google_genai_api_key: str = ""
+    google_genai_model: str = "gemini-3.1-flash-lite"
+    google_genai_default_max_output_tokens: int = 600
+    openwebui_api_key: str = ""
 
     model_config = SettingsConfigDict(
         env_file=".env",
