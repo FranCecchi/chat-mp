@@ -1,4 +1,4 @@
-# Chat MP
+# Chat Movimientos de Pensamiento
 
 Backend minimo para probar un bot de Telegram conectado a una API FastAPI.
 

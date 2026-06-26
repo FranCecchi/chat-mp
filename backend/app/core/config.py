@@ -7,11 +7,20 @@ class Settings(BaseSettings):
     app_name: str = "Chat Movimientos de Pensamiento API"
     environment: str = "development"
 
-    telegram_bot_token: str = ""
-    telegram_webhook_secret: str = "dev-secret"
+    # Provider & Model selection (configurable from .env)
+    llm_provider: str = "gemini"  # "gemini" or "deepseek"
+    llm_model: str = "gemini-1.5-flash"
 
+    # Provider configuration
     gemini_api_key: str = ""
-    gemini_model: str = "gemini-1.5-flash"
+    
+    deepseek_api_key: str = ""
+    deepseek_api_base: str = "https://api.deepseek.com/v1"
+    deepseek_thinking: bool = True
+
+    # Teacher dashboard
+    teacher_password: str = ""
+    db_path: str = "chat_mp.db"
 
     model_config = SettingsConfigDict(
         env_file=".env",
