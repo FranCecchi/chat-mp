@@ -30,6 +30,8 @@ interface Diagnosis {
   activity_context: string | null;
   created_at: string;
   conversation_history?: string | null;
+  feedback_status?: string | null;
+  feedback_corrected_movement?: string | null;
 }
 
 const BACKEND_URL = 'http://localhost:8000';
@@ -103,6 +105,10 @@ function TeacherDashboard({ password, onLogout }: { password: string; onLogout: 
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [showTranscript, setShowTranscript] = useState<Record<number, boolean>>({});
 
+  const [correctingId, setCorrectingId] = useState<number | null>(null);
+  const [selectedMovement, setSelectedMovement] = useState<string>('Observar con atención y describir');
+  const [submittingFeedback, setSubmittingFeedback] = useState<Record<number, boolean>>({});
+
   const toggleTranscript = (id: number) => {
     setShowTranscript((prev) => ({ ...prev, [id]: !prev[id] }));
   };
@@ -114,6 +120,43 @@ function TeacherDashboard({ password, onLogout }: { password: string; onLogout: 
     } catch (e) {
       console.error('Failed to parse conversation history', e);
       return [];
+    }
+  };
+
+  const handleFeedback = async (diagnosisId: number, isCorrect: boolean, movement?: string) => {
+    setSubmittingFeedback(prev => ({ ...prev, [diagnosisId]: true }));
+    try {
+      const res = await fetch(`${BACKEND_URL}/teacher/feedback`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Teacher-Password': password,
+        },
+        body: JSON.stringify({
+          diagnosis_id: diagnosisId,
+          is_correct: isCorrect,
+          correct_movement: movement || null,
+        }),
+      });
+      if (!res.ok) throw new Error('Failed to submit feedback');
+      const data = await res.json();
+      
+      setDiagnoses(prev =>
+        prev.map(d =>
+          d.id === diagnosisId
+            ? {
+                ...d,
+                feedback_status: data.feedback_status,
+                feedback_corrected_movement: movement || null,
+              }
+            : d
+        )
+      );
+      setCorrectingId(null);
+    } catch (e) {
+      alert('Error al enviar la retroalimentación.');
+    } finally {
+      setSubmittingFeedback(prev => ({ ...prev, [diagnosisId]: false }));
     }
   };
 
@@ -275,6 +318,81 @@ function TeacherDashboard({ password, onLogout }: { password: string; onLogout: 
                         ) : (
                           <p className="no-transcript-label"><em>Chat no disponible para este diagnóstico.</em></p>
                         )}
+
+                        {/* Bucle de Feedback de Diagnóstico */}
+                        <div className="feedback-container">
+                          <strong>¿Esta clasificación es correcta?</strong>
+                          
+                          {d.feedback_status ? (
+                            <div className="feedback-result-badge">
+                              {d.feedback_status === 'correct' ? (
+                                <span className="feedback-badge success">👍 Clasificación verificada</span>
+                              ) : (
+                                <span className="feedback-badge error">
+                                  👎 Clasificación corregida (Movimiento correcto: <strong>{d.feedback_corrected_movement}</strong>)
+                                </span>
+                              )}
+                            </div>
+                          ) : correctingId === d.id ? (
+                            <div className="feedback-correction-form">
+                              <label htmlFor={`correct-mov-select-${d.id}`} className="feedback-select-label">Elegí el movimiento correcto:</label>
+                              <div className="feedback-form-row">
+                                <select
+                                  id={`correct-mov-select-${d.id}`}
+                                  className="text-input feedback-select"
+                                  value={selectedMovement}
+                                  onChange={(e) => setSelectedMovement(e.target.value)}
+                                  disabled={submittingFeedback[d.id]}
+                                >
+                                  {THINKING_MOVES.map(m => (
+                                    <option key={m.name} value={m.name}>{m.name}</option>
+                                  ))}
+                                  <option value="Ninguno">Ninguno</option>
+                                </select>
+                                <button
+                                  type="button"
+                                  className="primary-btn feedback-save-btn"
+                                  onClick={() => handleFeedback(d.id, false, selectedMovement)}
+                                  disabled={submittingFeedback[d.id]}
+                                >
+                                  {submittingFeedback[d.id] ? 'Guardando...' : 'Confirmar'}
+                                </button>
+                                <button
+                                  type="button"
+                                  className="secondary-btn feedback-cancel-btn"
+                                  onClick={() => setCorrectingId(null)}
+                                  disabled={submittingFeedback[d.id]}
+                                >
+                                  Cancelar
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="feedback-buttons-row">
+                              <button
+                                type="button"
+                                className="feedback-action-btn thumbs-up"
+                                onClick={() => handleFeedback(d.id, true)}
+                                disabled={submittingFeedback[d.id]}
+                                title="Clasificación correcta"
+                              >
+                                👍 Sí, es correcta
+                              </button>
+                              <button
+                                type="button"
+                                className="feedback-action-btn thumbs-down"
+                                onClick={() => {
+                                  setCorrectingId(d.id);
+                                  setSelectedMovement(d.movimiento || 'Observar con atención y describir');
+                                }}
+                                disabled={submittingFeedback[d.id]}
+                                title="Corregir clasificación"
+                              >
+                                👎 No, corregir
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>

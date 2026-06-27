@@ -33,6 +33,10 @@ def _init_db_sync() -> None:
     columns = [row[1] for row in cursor.fetchall()]
     if "conversation_history" not in columns:
         conn.execute("ALTER TABLE diagnoses ADD COLUMN conversation_history TEXT")
+    if "feedback_status" not in columns:
+        conn.execute("ALTER TABLE diagnoses ADD COLUMN feedback_status TEXT")
+    if "feedback_corrected_movement" not in columns:
+        conn.execute("ALTER TABLE diagnoses ADD COLUMN feedback_corrected_movement TEXT")
     conn.commit()
     conn.close()
 
@@ -99,3 +103,49 @@ def _get_all_diagnoses_sync() -> list[dict]:
 
 async def get_all_diagnoses() -> list[dict]:
     return await asyncio.to_thread(_get_all_diagnoses_sync)
+
+
+def _get_diagnosis_sync(diagnosis_id: int) -> dict | None:
+    conn = sqlite3.connect(_db_path())
+    conn.row_factory = sqlite3.Row
+    cursor = conn.execute(
+        "SELECT * FROM diagnoses WHERE id = ?",
+        (diagnosis_id,)
+    )
+    row = cursor.fetchone()
+    res = dict(row) if row else None
+    conn.close()
+    return res
+
+
+async def get_diagnosis(diagnosis_id: int) -> dict | None:
+    return await asyncio.to_thread(_get_diagnosis_sync, diagnosis_id)
+
+
+def _submit_diagnosis_feedback_sync(
+    diagnosis_id: int,
+    status: str,
+    corrected_movement: str | None = None
+) -> None:
+    conn = sqlite3.connect(_db_path())
+    conn.execute(
+        """UPDATE diagnoses
+           SET feedback_status = ?, feedback_corrected_movement = ?
+           WHERE id = ?""",
+        (status, corrected_movement, diagnosis_id)
+    )
+    conn.commit()
+    conn.close()
+
+
+async def submit_diagnosis_feedback(
+    diagnosis_id: int,
+    status: str,
+    corrected_movement: str | None = None
+) -> None:
+    await asyncio.to_thread(
+        _submit_diagnosis_feedback_sync,
+        diagnosis_id,
+        status,
+        corrected_movement
+    )

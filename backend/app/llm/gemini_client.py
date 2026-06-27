@@ -158,3 +158,91 @@ async def invoke_chain(
             )
             await asyncio.sleep(1.0)
 
+
+async def generate_correction_analysis(
+    original_movement: str,
+    corrected_movement: str,
+    chat_transcript: str
+) -> dict[str, str]:
+    """
+    Generate a corrected pedagogical justification and an explanation of why the original
+    classification was incorrect, returning a dict with keys 'justification' and 'error_explanation'.
+    """
+    settings = get_settings()
+    
+    # Initialize the LLM based on provider
+    if settings.llm_provider == "deepseek":
+        if not settings.deepseek_api_key:
+            return {
+                "justification": f"El docente clasificó esta actividad como '{corrected_movement}'.",
+                "error_explanation": f"La clasificación original como '{original_movement}' fue incorrecta."
+            }
+        from langchain_openai import ChatOpenAI
+        llm = ChatOpenAI(
+            model=settings.llm_model,
+            openai_api_key=settings.deepseek_api_key,
+            openai_api_base=settings.deepseek_api_base,
+            temperature=0.3,
+        )
+    else:
+        if not settings.gemini_api_key:
+            return {
+                "justification": f"El docente clasificó esta actividad como '{corrected_movement}'.",
+                "error_explanation": f"La clasificación original como '{original_movement}' fue incorrecta."
+            }
+        llm = ChatGoogleGenerativeAI(
+            model=settings.llm_model,
+            google_api_key=settings.gemini_api_key,
+            temperature=0.3,
+        )
+        
+    if corrected_movement == "Ninguno":
+        prompt = (
+            f"Sos un asistente pedagógico experto. El docente corrigió el diagnóstico de una actividad de un estudiante.\n"
+            f"- El asistente había clasificado originalmente la actividad como: '{original_movement}'\n"
+            f"- El docente corrigió la clasificación a: 'Ninguno' (no corresponde a ningún movimiento escolar de la rúbrica).\n\n"
+            f"Analizá la siguiente conversación del estudiante:\n"
+            f"{chat_transcript}\n\n"
+            f"Generá un objeto JSON con dos campos:\n"
+            f"1. \"justification\": Una justificación pedagógica breve (de 1 a 3 oraciones) que explique por qué la actividad descrita no corresponde a un proceso de aprendizaje escolar o no promueve movimientos de pensamiento significativos de la rúbrica.\n"
+            f"2. \"error_explanation\": Una explicación breve e incisiva (de 1 a 2 oraciones) de por qué clasificar la actividad originalmente como '{original_movement}' fue un error o resultó incorrecto en base a lo que el alumno relata en el chat.\n\n"
+            f"Devolvé únicamente el objeto JSON con este formato exacto, sin markdown ni introducciones."
+        )
+    else:
+        prompt = (
+            f"Sos un asistente pedagógico experto. El docente corrigió el diagnóstico de una actividad de un estudiante.\n"
+            f"- El asistente había clasificado originalmente la actividad como: '{original_movement}'\n"
+            f"- El docente corrigió la clasificación al movimiento: '{corrected_movement}' (en su logro esperado).\n\n"
+            f"Analizá la siguiente conversación del estudiante:\n"
+            f"{chat_transcript}\n\n"
+            f"Generá un objeto JSON con dos campos:\n"
+            f"1. \"justification\": Una justificación pedagógica breve (de 1 a 3 oraciones) que explique cómo la actividad del alumno demuestra el movimiento '{corrected_movement}', basándote en los criterios de la rúbrica oficial.\n"
+            f"2. \"error_explanation\": Una explicación breve e incisiva (de 1 a 2 oraciones) de por qué clasificar la actividad originalmente como '{original_movement}' fue un error o resultó insuficiente en base a lo que el alumno relata en el chat.\n\n"
+            f"Devolvé únicamente el objeto JSON con este formato exacto, sin markdown ni introducciones."
+        )
+    
+    try:
+        from langchain_core.messages import HumanMessage
+        response = await llm.ainvoke([HumanMessage(content=prompt)])
+        content = response.content.strip()
+        # Clean potential markdown block wrappers
+        if content.startswith("```"):
+            lines = content.splitlines()
+            if lines[0].startswith("```json") or lines[0].startswith("```"):
+                content = "\n".join(lines[1:-1]).strip()
+        
+        import json
+        data = json.loads(content)
+        return {
+            "justification": data.get("justification", "").strip(),
+            "error_explanation": data.get("error_explanation", "").strip()
+        }
+    except Exception as e:
+        logger.error(f"Failed to generate correction analysis: {e}", exc_info=True)
+        return {
+            "justification": f"El docente clasificó esta actividad como '{corrected_movement}'.",
+            "error_explanation": f"La clasificación original como '{original_movement}' fue incorrecta."
+        }
+
+
+
