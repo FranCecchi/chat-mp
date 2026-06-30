@@ -696,13 +696,13 @@ function App() {
         <div className="user-controls">
           <span className="user-tag">@{user.username}</span>
           <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="secondary-btn toggle-sidebar-btn">
-            {isSidebarOpen ? 'Ocultar Rúbricas' : 'Ver Rúbricas'}
+            {isSidebarOpen ? 'Ocultar' : 'Rúbricas'}
           </button>
           <button onClick={handleReset} className="secondary-btn" title="Reiniciar chat">
             Reiniciar
           </button>
-          <button onClick={handleLogout} className="secondary-btn" title="Salir">
-            Cerrar Sesión
+          <button onClick={handleLogout} className="secondary-btn" title="Cerrar Sesión">
+            Salir
           </button>
         </div>
       </header>
