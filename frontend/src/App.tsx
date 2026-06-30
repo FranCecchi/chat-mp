@@ -417,7 +417,7 @@ function App() {
   const [conversationId, setConversationId] = useState<string | null>(null);
 
   // Sidebar states
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => window.innerWidth > 768);
   const [expandedMove, setExpandedMove] = useState<string | null>(null);
 
   // Login mode: 'student' | 'teacher'

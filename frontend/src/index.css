@@ -1008,6 +1008,36 @@ body {
   .diagnosis-mov { max-width: 160px; }
 }
 
+@media (max-width: 600px) {
+  .distrib-row {
+    grid-template-columns: 1fr auto;
+    gap: 0.35rem;
+  }
+  .distrib-label {
+    grid-column: 1 / 3;
+    white-space: normal;
+  }
+  .distrib-track {
+    grid-column: 1 / 2;
+  }
+  .distrib-count {
+    grid-column: 2 / 3;
+  }
+  .feedback-form-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+  .feedback-select {
+    max-width: none;
+    width: 100%;
+  }
+  .feedback-save-btn, .feedback-cancel-btn {
+    width: 100% !important;
+    margin: 0 !important;
+  }
+}
+
 /* Transcript Section in Teacher Panel */
 .transcript-section {
   margin-top: 0.75rem;
@@ -1125,7 +1155,9 @@ body {
   }
 
   .user-controls {
-    gap: 0.4rem;
+    gap: 0.3rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
   }
 
   .user-controls .secondary-btn {
