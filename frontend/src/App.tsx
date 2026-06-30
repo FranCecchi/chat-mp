@@ -34,7 +34,7 @@ interface Diagnosis {
   feedback_corrected_movement?: string | null;
 }
 
-const BACKEND_URL = 'http://localhost:8000';
+const BACKEND_URL = import.meta.env.PROD ? 'https://api.chatmp.xyz' : 'http://localhost:8000';
 
 const THINKING_MOVES = [
   {
