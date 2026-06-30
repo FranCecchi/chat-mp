@@ -428,6 +428,25 @@ function App() {
   );
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+ 
+  // Handle mobile visual viewport resize to prevent keyboard panning issues
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    
+    const updateHeight = () => {
+      document.documentElement.style.setProperty('--viewport-height', `${vv.height}px`);
+    };
+    
+    vv.addEventListener('resize', updateHeight);
+    vv.addEventListener('scroll', updateHeight);
+    updateHeight();
+    
+    return () => {
+      vv.removeEventListener('resize', updateHeight);
+      vv.removeEventListener('scroll', updateHeight);
+    };
+  }, []);
 
   // Load user session + persisted chat on mount
   useEffect(() => {
